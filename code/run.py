@@ -14,10 +14,15 @@ parser.add_argument('--model', type=str, required=False, default='TSATT2',
                         help='model name, options: [Autoformer, Transformer, TimesNet]')
 
 parser.add_argument('--feature', type=str, default='TMP', help='File name for the output CSV file')
-parser.add_argument('--region', choices=['California', 'Guangdong'], default='California',
+parser.add_argument('--region', choices=['California', 'Guangdong'],
+                    default=os.environ.get('REGION', 'California'),
                     help='study region used to select normalization statistics')
 parser.add_argument('--scaler_dir', type=str, default=None,
                     help='override the normalization-statistics directory')
+parser.add_argument('--data_root', type=str, default=os.environ.get('DATA_ROOT', '..'),
+                    help='repository root containing the extracted California/ or Guangdong/ directory')
+parser.add_argument('--mask_dir', type=str, default=None,
+                    help='override the generated mask root directory')
 parser.add_argument('--loss', type=str, default='Huber', help='loss')
 parser.add_argument('--way', type=str, default='everynode', help='标准化方式')
 # data loader
@@ -120,8 +125,9 @@ parser.add_argument('--start_itr', type=int, default=0, help='Iteration index to
 parser.add_argument('--resume', action='store_true', help='Resume training from a checkpoint')
 parser.add_argument('--resume_epoch', type=int, default=0, help='Specific epoch to resume from (used together with --resume)')
 args = parser.parse_args()
-if args.scaler_dir is None:
-    args.scaler_dir = os.path.join('./scaler', args.region)
+from utils.data_paths import configure_data_paths, require_feature_directory
+configure_data_paths(args)
+require_feature_directory(args)
 
 BASE_SEED = args.seed
 os.environ['PYTHONHASHSEED'] = str(BASE_SEED)

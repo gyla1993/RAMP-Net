@@ -5,6 +5,8 @@ import os
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 
+from models.Kriging_pre import pure_ordinary_kriging
+
 
 def safe_load_npy(path):
     if os.path.exists(path):
@@ -18,7 +20,7 @@ class Model(nn.Module):
         self.k = 4
         self.feature = args.feature
 
-        feature_dir = f"../{args.feature}"
+        feature_dir = args.feature_dir
         locations = safe_load_npy(os.path.join(feature_dir, "locations.npy"))
         locations_e = safe_load_npy(os.path.join(feature_dir, "locations_e.npy"))
 
@@ -31,7 +33,15 @@ class Model(nn.Module):
         self.register_buffer("neighbor_indices", torch.from_numpy(indices).long())
 
         w_path = os.path.join(feature_dir, "pure_kriging_weights_norm.csv")
+        if not os.path.isfile(w_path):
+            print(f"Kriging weights not found; generating {w_path}")
+            pure_ordinary_kriging(args)
         weights_df = pd.read_csv(w_path, index_col="station_id")
+        if weights_df.shape != (locations.shape[0], self.k):
+            raise ValueError(
+                f"Unexpected Kriging weight shape {weights_df.shape}; "
+                f"expected {(locations.shape[0], self.k)}"
+            )
         self.register_buffer("k_weights", torch.FloatTensor(weights_df.values))
 
     def forward(self, obs_his, era_his, cobs, cera, mask, datee):

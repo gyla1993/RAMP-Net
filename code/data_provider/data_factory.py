@@ -62,7 +62,7 @@ def data_provider(args, flag, train_generator=None,base_seed=None):
     shuffle_flag = True if (flag == 'train' or flag == 'TRAIN') else False
     drop_last = True if (flag == 'train' or flag == 'TRAIN') else False
     freq = args.freq
-    feature_dir = f"../{args.feature}"
+    feature_dir = args.feature_dir
     X_train_all = safe_load_npy(os.path.join(feature_dir, 'X_train_all.npy'))
     X_val_all = safe_load_npy(os.path.join(feature_dir, 'X_val_all.npy'))
     X_test_all = safe_load_npy(os.path.join(feature_dir, 'X_test_all.npy'))

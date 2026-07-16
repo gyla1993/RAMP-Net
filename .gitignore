@@ -10,5 +10,10 @@ parameter/
 wandb/
 neighbors.csv
 neighbor_coords.csv
+*_nocross
 data/*.rar
 code/mask_rate/*.rar
+/California/
+/Guangdong/
+/*.rar
+code/mask_rate/*/

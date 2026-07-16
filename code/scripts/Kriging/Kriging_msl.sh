@@ -38,7 +38,7 @@ for mask_rate in "${mask_rates[@]}"; do
         iitr=$idx
         echo "Running experiment: seed=$seed, iitr=$iitr, mask_rate=$mask_rate"
 
-        python -u run_era.py \
+        python -u run.py \
             --seed "$seed" \
             --iitr "$iitr" \
             --model_id "$model_id" \

@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import pandas as pd
-from torch.nn.attention.flex_attention import or_masks
 
 from torch.utils.data import Dataset, DataLoader
 
@@ -9,6 +8,7 @@ from utils.timefeatures import time_features
 
 import warnings
 from utils.augmentation import run_augmentation_single
+from utils.data_paths import load_or_create_mask, regional_mask_shape
 
 warnings.filterwarnings('ignore')
 
@@ -101,8 +101,11 @@ class Dataset_Custom_l(Dataset):
         X_val_o = np.tile(X_val_o[np.newaxis, :, :], (10, 1, 1))
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
-        filename = f'./mask_rate/{self.args.mask_rate}/test_mask_{self.args.feature}_{self.args.iitr}.npy'
-        test_masks = np.load(filename)
+        test_masks = load_or_create_mask(
+            self.args,
+            "test",
+            regional_mask_shape(self.args, len(df_raw) - num_train - num_val),
+        )
         test_mask=test_masks[:,self.node_num,:,:]#10 T 1
         X_test_i = np.tile(X_test_i[np.newaxis, :, :], (10, 1, 1))#10 T 4
         X_test_o= np.tile(X_test_o[np.newaxis, :, :], (10, 1, 1))  # 10 T 1
@@ -272,21 +275,11 @@ class Dataset_Custom_0(Dataset):
             X_val_all_e_norm=self.X_val_all_e
             X_test_all_e_norm=self.X_test_all_e
         if self.set_type == 0:
-            filename=f'./mask_rate/{self.args.mask_rate}/train_mask_{self.args.feature}_{self.args.iitr}.npy'
-            if os.path.exists(filename):
-                train_masks = np.load(filename)
-            train_masks = np.array(train_masks)  # [10,N,T,1 or C]
+            train_masks = load_or_create_mask(self.args, "train", self.X_train_all.shape)
         elif self.set_type == 1:
-            filename=f'./mask_rate/{self.args.mask_rate}/val_mask_{self.args.feature}_{self.args.iitr}.npy'
-            if os.path.exists(filename):
-                val_masks = np.load(filename)
-            val_masks = np.array(val_masks)
+            val_masks = load_or_create_mask(self.args, "val", self.X_val_all.shape)
         else:
-            filename = f'./mask_rate/{self.args.mask_rate}/test_mask_{self.args.feature}_{self.args.iitr}.npy'
-            if os.path.exists(filename):
-                test_masks = np.load(filename)
-                print( test_masks.shape)
-            test_masks = np.array(test_masks)
+            test_masks = load_or_create_mask(self.args, "test", self.X_test_all.shape)
         df_date = pd.read_csv('./data_provider/split_date.csv')
         all_dates = pd.to_datetime(df_date['DATE'])
         df_stamp = df_date[['DATE']]
@@ -490,22 +483,22 @@ class Dataset_Custom_s0(Dataset):
             self.X_test_all_norm = X_test_all
 
         if self.set_type == 0:
-
-            filename=f'./mask_rate/{self.mask_rate}/train_mask_{self.args.feature}_{self.args.iitr}.npy'
-            train_masks = np.load(filename)
+            train_masks = load_or_create_mask(
+                self.args, "train", regional_mask_shape(self.args, len(X_train_all))
+            )
             train_masks=train_masks[:, self.node_num, :, :]
             train_masks = np.array(train_masks)
         elif self.set_type == 1:
-            filename = f'./mask_rate/{self.mask_rate}/val_mask_{self.args.feature}_{self.args.iitr}.npy'
-            val_masks = np.load(filename)
+            val_masks = load_or_create_mask(
+                self.args, "val", regional_mask_shape(self.args, len(X_val_all))
+            )
             val_masks = val_masks[:, self.node_num, :, :]
             val_masks = np.array(val_masks)
         else:
-            filename = f'./mask_rate/{self.args.mask_rate}/test_mask_{self.args.feature}_{self.args.iitr}.npy'
-
-            if os.path.exists(filename):
-                test_masks = np.load(filename)
-                test_masks=test_masks[:, self.node_num, :, :]
+            test_masks = load_or_create_mask(
+                self.args, "test", regional_mask_shape(self.args, len(X_test_all))
+            )
+            test_masks=test_masks[:, self.node_num, :, :]
             test_masks = np.array(test_masks)
 
         border1 = border1s[self.set_type]

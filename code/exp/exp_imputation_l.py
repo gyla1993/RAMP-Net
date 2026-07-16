@@ -79,7 +79,7 @@ class Exp_Imputation_l(Exp_Basic):
     def train(self, setting):
         train_generator = Generator()
         train_generator.manual_seed(self.args.seed)
-        feature_dir = f"../{self.args.feature}"
+        feature_dir = self.args.feature_dir
         X_train_all = np.load(os.path.join(feature_dir, 'X_train_all.npy'))
         print("Data mean =", X_train_all.mean())
         vali_data, vali_loader = self._get_data(flag='val')
@@ -193,4 +193,3 @@ class Exp_Imputation_l(Exp_Basic):
         np.save(folder_path + 'pred.npy', preds)
         np.save(folder_path + 'true.npy', trues)
         return mae, mse, rmse, smape,maape,r,r2
-

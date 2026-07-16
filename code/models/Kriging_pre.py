@@ -1,4 +1,4 @@
-"Workflow: Generate Kriging weights in this file, then pass them to the Kriging execution script."
+"""Generate ordinary-Kriging weights for the selected region and variable."""
 import numpy as np
 import pandas as pd
 import os
@@ -28,8 +28,14 @@ def spherical_variogram(h, nugget, sill, range_a):
     return res
 
 
-def compute_global_variogram_from_grid(locs_grid, grid_data):
+def compute_global_variogram_from_grid(locs_grid, grid_data, max_time_samples=1000):
+    """Fit a global variogram from a spatial and temporal sample of ERA5 data."""
     M = locs_grid.shape[0]
+    if grid_data.ndim != 2 or grid_data.shape[1] != M:
+        raise ValueError(f"Expected grid data shaped (time, {M}), got {grid_data.shape}")
+    if grid_data.shape[0] > max_time_samples:
+        time_idx = np.linspace(0, grid_data.shape[0] - 1, max_time_samples, dtype=int)
+        grid_data = grid_data[time_idx]
     dists = []
     gammas = []
     step = max(1, M // 200)
@@ -50,24 +56,24 @@ def compute_global_variogram_from_grid(locs_grid, grid_data):
 
     try:
         popt, _ = curve_fit(spherical_variogram, dists, gammas, p0=p0, maxfev=15000)
-        popt = np.clip(popt, [1e-8, 1e-8, 1e-8], [None, None, None])
-    except:
+        popt = np.maximum(popt, 1e-8)
+    except (RuntimeError, ValueError, FloatingPointError):
         popt = [1e-3, global_var, np.median(dists)]
 
     print(f"nugget={popt[0]:.4f}, sill={popt[1]:.4f}, range={popt[2]:.4f}")
     return popt
 
 def pure_ordinary_kriging(args):
-    feature_dir = f"../../{args.feature}"
-    filename_mean_e = f"../scaler/{args.feature}_mean_e.npy"
-    filename_std_e = f"../scaler/{args.feature}_std_e.npy"
+    feature_dir = args.feature_dir
+    filename_mean_e = os.path.join(args.scaler_dir, f"{args.feature}_mean_e.npy")
+    filename_std_e = os.path.join(args.scaler_dir, f"{args.feature}_std_e.npy")
     locs_station = np.radians(safe_load_npy(os.path.join(feature_dir, "locations.npy")))
     locs_grid = np.radians(safe_load_npy(os.path.join(feature_dir, "locations_e.npy")))
     X_grid = safe_load_npy(os.path.join(feature_dir, "X_train_all_e.npy"))
     mean_e = np.load(filename_mean_e)
     std_e = np.load(filename_std_e)
     X_grid_norm = (X_grid - mean_e) / std_e
-    X_grid_norm = X_grid_norm[:, :, 0]
+    X_grid_norm = X_grid_norm[:, :, 0].T
     global_popt = compute_global_variogram_from_grid(locs_grid, X_grid_norm)
     nbrs = NearestNeighbors(n_neighbors=4, algorithm="ball_tree", metric="haversine").fit(locs_grid)
     _, indices = nbrs.kneighbors(locs_station)
@@ -96,17 +102,11 @@ def pure_ordinary_kriging(args):
 
             w = np.linalg.solve(A, B)
             weights[i] = w[:4]
-        except:
-            pass
+        except np.linalg.LinAlgError:
+            weights[i] = np.linalg.lstsq(A, B, rcond=None)[0][:4]
     df = pd.DataFrame(weights, columns=[f"weight_{k + 1}" for k in range(4)])
     df.index.name = "station_id"
     out_path = os.path.join(feature_dir, "pure_kriging_weights_norm.csv")
     df.to_csv(out_path)
     print(f"\n{out_path}")
     return out_path, n_sta, n_sta
-if __name__ == "__main__":
-    class Args:
-        def __init__(self):
-            self.feature = "v10"
-    args = Args()
-    pure_ordinary_kriging(args)

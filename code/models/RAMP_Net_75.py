@@ -271,7 +271,7 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.k = getattr(args, 'k', 4)  # 默认 k=4
         # === 1. 加载固定坐标 ===
-        feature_dir = f"../{args.feature}"
+        feature_dir = args.feature_dir
         locations= np.load(os.path.join(feature_dir, 'locations.npy'))  # [N, 2]
         locations_e = np.load(os.path.join(feature_dir, 'locations_e.npy'))# [N, 2]
         cpan_flat = locations_e.reshape(-1, 2)
@@ -492,4 +492,3 @@ class Model(nn.Module):
         """
 
         return out,out
-
