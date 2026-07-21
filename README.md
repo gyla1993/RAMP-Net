@@ -9,7 +9,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f.svg)](LICENSE)
 [![Data](https://img.shields.io/badge/Processed%20Data-Google%20Drive-4285F4?logo=googledrive&logoColor=white)](https://drive.google.com/drive/folders/1Lm8lddu4-yTe54fitGt2sFfIIb3k2sMv?usp=sharing)
 
-Official implementation accompanying the *Computers & Geosciences* manuscript.
 
 [Processed data](https://drive.google.com/drive/folders/1Lm8lddu4-yTe54fitGt2sFfIIb3k2sMv?usp=sharing) · [Quick test](#quick-test) · [Full experiments](#reproducing-the-experiments) · [License](#license-and-citation)
 
@@ -289,4 +288,3 @@ RAMP-Net/
 
 The RAMP-Net source code and documentation are released under the [MIT License](LICENSE). Dataset and third-party model licenses are unchanged.
 
-Please cite the accompanying *Computers & Geosciences* manuscript when using this repository. The final bibliographic entry will be added after publication.
